@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+/*
 
 void main() {
   runApp(const MyApp());
@@ -7,7 +8,7 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+     This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -120,6 +121,119 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}*/
+
+import 'package:provider/provider.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class Task {
+  final String title;
+  bool isCompleted;
+
+  Task({required this.title, this.isCompleted = false});
+}
+
+class TaskProvider with ChangeNotifier {
+  final List<Task> _tasks = [];
+
+  List<Task> get tasks => _tasks;
+
+  void addTask(String title) {
+    _tasks.add(Task(title: title));
+    notifyListeners();
+  }
+
+  void toggleTask(Task task) {
+    task.isCompleted = !task.isCompleted;
+    notifyListeners();
+  }
+
+  void removeTask(Task task) {
+    _tasks.remove(task);
+    notifyListeners();
+  }
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) => TaskProvider(),
+      child: MaterialApp(
+        home: TaskListScreen(),
+      ),
+    );
+  }
+}
+
+class TaskListScreen extends StatelessWidget {
+  final TextEditingController _controller = TextEditingController();
+  TaskListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Görev Yönetimi")),
+      body: Column(
+        children: [
+          Expanded(
+            child: Consumer<TaskProvider>(
+              builder: (context, taskProvider, child) {
+                return ListView.builder(
+                  itemCount: taskProvider.tasks.length,
+                  itemBuilder: (context, index) {
+                    final task = taskProvider.tasks[index];
+                    return ListTile(
+                      title: Text(task.title),
+                      leading: Checkbox(
+                        value: task.isCompleted,
+                        onChanged: (value) {
+                          taskProvider.toggleTask(task);
+                        },
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          taskProvider.removeTask(task);
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(labelText: "Yeni Görev"),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.add),
+                  onPressed: () {
+                    if (_controller.text.isNotEmpty) {
+                      Provider.of<TaskProvider>(context, listen: false)
+                          .addTask(_controller.text);
+                      _controller.clear();
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
